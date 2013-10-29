@@ -1,5 +1,8 @@
 package App::webcritic::Web;
 use mop;
+use strict;
+use warnings;
+use feature ':5.10';
 use Socket;
 use Module::Load;
 use Time::HiRes qw/gettimeofday/;
@@ -55,7 +58,7 @@ class Site with App::webcritic::Log::Logger {
   method get_page_list { $!page_list }
   
   method parse {
-    $self->log_info(qq{Start parse "${!name}"});
+    $self->log_info('Start parse '.$!name);
     my @pool = @{$!page_list};
     while (my $page = pop @pool) { eval { # parsers may die
       $page->parse();
@@ -69,7 +72,7 @@ class Site with App::webcritic::Log::Logger {
         $new_page->check_policies();
       }
     } or $self->log_error($@)}
-    $self->log_error(qq{"${!name}" parsed});
+    $self->log_error($!name.' parsed');
   }
   
   method exist_page($page) {
@@ -90,7 +93,7 @@ class Site with App::webcritic::Log::Logger {
   method get_page_by_url($url) { $self->page_by_url->{$url} }
 }
 
-class Page with role App::webcritic::Log::Logger {
+class Page with App::webcritic::Log::Logger {
   has $!url;
   has $!link;
   has $!content;
@@ -116,7 +119,7 @@ class Page with role App::webcritic::Log::Logger {
       load $policy->{module};
       my $opts = $policy->{options} || {};
       my $p = $policy->{module}->new($opts);
-      $p->set_name($policy->{name})->set_page($self)->inspect;
+      $p->name($policy->{name})->page($self)->inspect;
       
       given ($p->status) {
         when(0) { $self->log_info('All fine at Policy "%s". Page: %s', $policy->{name}, $!url) }
@@ -127,7 +130,7 @@ class Page with role App::webcritic::Log::Logger {
   }
   
   method parse {
-    $self->log_info('Looking for '.$this->url);
+    $self->log_info('Looking for '.$!url);
     my $hrtime0 = gettimeofday;
     
     my $ua = App::webcritic::UserAgent::Factory->new->get_ua($self);
@@ -158,9 +161,70 @@ class Page with role App::webcritic::Log::Logger {
   method add_link_by_url($url, $type) {
     return unless $url;
     $self->log_debug('Add link [%10s] %s', $type, $url);
-    my $link = App::webcritic::Web::Link->new( $url, $type);
-    push @{!link_list}, $link;
+    my $link = App::webcritic::Web::Link->new($url, $type);
+    push @{$!link_list}, $link;
+  }
+}
+
+class Link {
+  # Var: $!type_list
+  #   List of valid types.
+  has $!type_list = {
+    undef => 0,
+    a_href => 1,
+    img_src => 2,
+    link_href => 3,
+    source_src => 4,
+  };
+  
+  # Var: $!type
+  #   Valid type. See $!type_list.
+  has $!type = 0;
+  has $!url;
+  has $!text = [];  # Can be defined by many attributes.
+  has $!follow = 0; # Rel=nofollow and others.
+  has $!page;       # App::webcritic::Web::Page for this link.
+  
+  method new($url, $type = 'undef', $text, $follow = 0) {
+    ($!url, $!text, $!follow) = ($url, $text, $follow);
+    die("Invalid link type") unless exists $!type_list->{$!type};
+    $!type = $!type_list->{$type};
+  }
+  
+  # Does this link opened for search engines
+  # (like Google or Yahoo)
+  method is_follow { !! $!follow }
+}
+
+class Content {
+  has $!code = 0;
+  has $!title = '';
+  has $!content = '';
+  
+  method new($code, $title, $content) {
+    ($!code, $!title, $!content) = ($code, $title, $content);
   }
 }
 
 1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Web for App::webcritic
+
+=head1 OVERVIEW
+
+This package inclides most recent web abstractions: Website, webpage, http link, page content/
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2013, Georgy Bazhukov aka bugov <gosha@bugov.net>.
+
+This program is free software, you can redistribute it and/or modify it under
+the terms of the Artistic License version 2.0.
+
+=cut

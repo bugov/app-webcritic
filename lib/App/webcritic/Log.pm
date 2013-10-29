@@ -1,4 +1,6 @@
 package App::webcritic::Log;
+use strict;
+use warnings;
 use mop;
 
 role Logger {
@@ -75,3 +77,24 @@ class Message {
 }
 
 1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Log for App::webcritic
+
+=head1 OVERVIEW
+
+This package provides Logger role (for logging).
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2013, Georgy Bazhukov aka bugov <gosha@bugov.net>.
+
+This program is free software, you can redistribute it and/or modify it under
+the terms of the Artistic License version 2.0.
+
+=cut

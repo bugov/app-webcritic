@@ -1,11 +1,14 @@
 # "That's a calculator. I ate it to gain its power."
 
 package App::webcritic;
-our $VERSION = '0.03';
+use strict;
+use warnings;
 use mop;
 
 use App::webcritic::Log;
 use App::webcritic::Web;
+
+our $VERSION = '0.03';
 
 class Critic with App::webcritic::Log::Logger{
   has $!config;
@@ -13,7 +16,7 @@ class Critic with App::webcritic::Log::Logger{
   
   method new($config) {
     $!config = $config;
-    $opts = $!config->get_data()->{global}->{options};
+    my $opts = $!config->get_data()->{global}->{options};
     $self->set_log_level($opts->{log_level}) if $opts->{log_level};
     
     for my $site (@{$!config->get_data()->{site_list}}) {
@@ -80,7 +83,7 @@ local site name.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2013, Georgy Bazhukov.
+Copyright (C) 2013, Georgy Bazhukov aka bugov <gosha@bugov.net>.
 
 This program is free software, you can redistribute it and/or modify it under
 the terms of the Artistic License version 2.0.
