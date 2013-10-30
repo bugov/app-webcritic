@@ -3,10 +3,12 @@ use strict;
 use warnings;
 use mop;
 
+use App::webcritic::Log::Adaptor;
+
 role Logger {
   has $!log_level;
   has $!log_adaptor;
-  has $!log_level_list = {
+  has $!log_level_list is ro = {
     debug => 00,
     info  => 20,
     warn  => 40,
@@ -74,6 +76,17 @@ class Message {
   method new($level, $format, $params) {
     ($!level, $!format, $!params) = ($level, $format, $params);
   }
+}
+
+class AdaptorFactory {
+  has $!log_adaptor;
+  
+  method new($adaptor = 'App::webcritic::Log::Adaptor::Term', @opts) {
+    load $adaptor;
+    $!log_adaptor = $adaptor->new(@opts);
+  }
+  
+  method get_log { $!log_adaptor }
 }
 
 1;
